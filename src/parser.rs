@@ -2,6 +2,22 @@ use crate::ast::{BinaryOp, Expr};
 use crate::error::CalcError;
 use crate::token::Token;
 
+pub fn parse_line(tokens: &[Token]) -> Result<Expr, CalcError> {
+    if tokens.len() >= 3 {
+        if let Token::Ident(name) = &tokens[0] {
+            if let Token::Assign = tokens[1] {
+                let expr = parse_expr(&tokens[2..])?;
+                return Ok(Expr::Assign {
+                    name: name.clone(),
+                    expr: Box::new(expr),
+                });
+            }
+        }
+    }
+
+    parse_expr(tokens)
+}
+
 pub fn parse_expr(tokens: &[Token]) -> Result<Expr, CalcError> {
     let (expr, pos) = parse_add_sub(tokens, 0)?;
     if pos != tokens.len() {
