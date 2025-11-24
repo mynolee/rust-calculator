@@ -14,6 +14,10 @@ pub enum Expr {
         name: String,
         expr: Box<Expr>,
     },
+    Call {
+        name: String,
+        args: Vec<Expr>,
+    },
 }
 
 #[derive(Debug, Clone, Copy)]

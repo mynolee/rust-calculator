@@ -5,4 +5,6 @@ pub enum CalcError {
     ParseError(String),
     DivideByZero,
     UndefinedVariable(String),
+    UndefinedFunction(String),
+    ArityMismatch { name: String, expected: usize, found: usize },
 }

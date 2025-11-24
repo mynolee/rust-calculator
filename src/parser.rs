@@ -101,8 +101,17 @@ fn parse_primary(tokens: &[Token], pos: usize) -> Result<(Expr, usize), CalcErro
             let (inner, next_pos) = parse_primary(tokens, pos + 1)?;
             Ok((Expr::UnaryNeg(Box::new(inner)), next_pos))
         }
+
         Token::Number(n) => Ok((Expr::Number(*n), pos + 1)),
-        Token::Ident(name) => Ok((Expr::Var(name.clone()), pos + 1)),
+
+        Token::Ident(name) => {
+            if matches!(tokens.get(pos + 1), Some(Token::LParen)) {
+                parse_call(tokens, pos)
+            } else {
+                Ok((Expr::Var(name.clone()), pos + 1))
+            }
+        }
+
         Token::LParen => {
             let (expr, pos2) = parse_add_sub(tokens, pos + 1)?;
             match tokens.get(pos2) {
@@ -110,6 +119,45 @@ fn parse_primary(tokens: &[Token], pos: usize) -> Result<(Expr, usize), CalcErro
                 _ => Err(CalcError::ParseError("expected ')'".into())),
             }
         }
-        other => Err(CalcError::InvalidToken(format!("unexpected token: {:?}", other))),
+
+        other => Err(CalcError::InvalidToken(format!(
+            "unexpected token: {:?}",
+            other
+        ))),
+    }
+}
+
+fn parse_call(tokens: &[Token], pos: usize) -> Result<(Expr, usize), CalcError> {
+    let name = if let Token::Ident(name) = &tokens[pos] {
+        name.clone()
+    } else {
+        return Err(CalcError::ParseError("expected function name".into()));
+    };
+
+    let mut args = Vec::new();
+    let mut cur_pos = pos + 2;
+
+    if matches!(tokens.get(cur_pos), Some(Token::RParen)) {
+        return Ok((Expr::Call { name, args }, cur_pos + 1));
+    }
+
+    loop {
+        let (arg_expr, next_pos) = parse_add_sub(tokens, cur_pos)?;
+        args.push(arg_expr);
+        cur_pos = next_pos;
+
+        match tokens.get(cur_pos) {
+            Some(Token::Comma) => {
+                cur_pos += 1;
+            }
+            Some(Token::RParen) => {
+                return Ok((Expr::Call { name, args }, cur_pos + 1));
+            }
+            _ => {
+                return Err(CalcError::ParseError(
+                    "expected ',' or ')' in argument list".into(),
+                ));
+            }
+        }
     }
 }

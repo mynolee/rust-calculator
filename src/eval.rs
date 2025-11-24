@@ -43,5 +43,45 @@ pub fn eval_expr(expr: &Expr, env: &mut Env) -> Result<i64, CalcError> {
             env.insert(name.clone(), value);
             Ok(value)
         }
+        Expr::Call { name, args } => {
+            let mut values = Vec::new();
+            for arg in args {
+                values.push(eval_expr(arg, env)?);
+            }
+
+            match name.as_str() {
+                "max" => {
+                    if values.len() != 2 {
+                        return Err(CalcError::ArityMismatch {
+                            name: name.clone(),
+                            expected: 2,
+                            found: values.len(),
+                        });
+                    }
+                    Ok(values[0].max(values[1]))
+                }
+                "min" => {
+                    if values.len() != 2 {
+                        return Err(CalcError::ArityMismatch {
+                            name: name.clone(),
+                            expected: 2,
+                            found: values.len(),
+                        });
+                    }
+                    Ok(values[0].min(values[1]))
+                }
+                "abs" => {
+                    if values.len() != 1 {
+                        return Err(CalcError::ArityMismatch {
+                            name: name.clone(),
+                            expected: 1,
+                            found: values.len(),
+                        });
+                    }
+                    Ok(values[0].abs())
+                }
+                _ => Err(CalcError::UndefinedFunction(name.clone())),
+            }
+        }
     }
 }
