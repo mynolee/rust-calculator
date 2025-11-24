@@ -1,10 +1,22 @@
-mod error;
-mod token;
 mod ast;
+mod error;
+mod eval;
 mod lexer;
 mod parser;
-mod eval;
+mod token;
+
+use crate::lexer::tokenize;
 
 fn main() {
-    println!("Rust Expression Engine - step 1 (types ready)");
+    let input = "x = 12 + foo(3, 4)";
+    println!("input: {}", input);
+
+    match tokenize(input) {
+        Ok(tokens) => {
+            println!("tokens: {:?}", tokens);
+        }
+        Err(e) => {
+            println!("Tokenize error: {:?}", e);
+        }
+    }
 }
