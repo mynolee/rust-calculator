@@ -97,6 +97,10 @@ fn parse_primary(tokens: &[Token], pos: usize) -> Result<(Expr, usize), CalcErro
     }
 
     match &tokens[pos] {
+        Token::Minus => {
+            let (inner, next_pos) = parse_primary(tokens, pos + 1)?;
+            Ok((Expr::UnaryNeg(Box::new(inner)), next_pos))
+        }
         Token::Number(n) => Ok((Expr::Number(*n), pos + 1)),
         Token::Ident(name) => Ok((Expr::Var(name.clone()), pos + 1)),
         Token::LParen => {
@@ -106,6 +110,6 @@ fn parse_primary(tokens: &[Token], pos: usize) -> Result<(Expr, usize), CalcErro
                 _ => Err(CalcError::ParseError("expected ')'".into())),
             }
         }
-        other => Err(CalcError::InvalidToken(format!("{:?}", other))),
+        other => Err(CalcError::InvalidToken(format!("unexpected token: {:?}", other))),
     }
 }

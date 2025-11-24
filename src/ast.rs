@@ -4,6 +4,7 @@ use crate::token::Token;
 pub enum Expr {
     Number(i64),
     Var(String),
+    UnaryNeg(Box<Expr>),
     Binary {
         op: BinaryOp,
         left: Box<Expr>,

@@ -8,6 +8,11 @@ pub fn eval_expr(expr: &Expr, env: &mut Env) -> Result<i64, CalcError> {
     match expr {
         Expr::Number(n) => Ok(*n),
 
+        Expr::UnaryNeg(inner) => {
+            let v = eval_expr(inner, env)?;
+            Ok(-v)
+        }
+
         Expr::Binary { op, left, right } => {
             let l = eval_expr(left, env)?;
             let r = eval_expr(right, env)?;
