@@ -6,17 +6,15 @@ mod parser;
 mod token;
 
 use crate::lexer::tokenize;
+use crate::parser::parse_expr;
 
 fn main() {
-    let input = "x = 12 + foo(3, 4)";
+    let input = "1 + 2 * (3 - 4)";
     println!("input: {}", input);
 
-    match tokenize(input) {
-        Ok(tokens) => {
-            println!("tokens: {:?}", tokens);
-        }
-        Err(e) => {
-            println!("Tokenize error: {:?}", e);
-        }
-    }
+    let tokens = tokenize(input).expect("tokenize failed");
+    println!("tokens: {:?}", tokens);
+
+    let ast = parse_expr(&tokens).expect("parse failed");
+    println!("ast: {:?}", ast);
 }

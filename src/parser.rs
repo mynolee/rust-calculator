@@ -1,0 +1,95 @@
+use crate::ast::{BinaryOp, Expr};
+use crate::error::CalcError;
+use crate::token::Token;
+
+pub fn parse_expr(tokens: &[Token]) -> Result<Expr, CalcError> {
+    let (expr, pos) = parse_add_sub(tokens, 0)?;
+    if pos != tokens.len() {
+        return Err(CalcError::ParseError(format!(
+            "extra tokens at position {}",
+            pos
+        )));
+    }
+    Ok(expr)
+}
+
+fn parse_add_sub(tokens: &[Token], mut pos: usize) -> Result<(Expr, usize), CalcError> {
+    let (mut node, mut pos2) = parse_mul_div(tokens, pos)?;
+    pos = pos2;
+
+    while pos < tokens.len() {
+        match tokens[pos] {
+            Token::Plus => {
+                let (rhs, next) = parse_mul_div(tokens, pos + 1)?;
+                node = Expr::Binary {
+                    op: BinaryOp::Add,
+                    left: Box::new(node),
+                    right: Box::new(rhs),
+                };
+                pos = next;
+            }
+            Token::Minus => {
+                let (rhs, next) = parse_mul_div(tokens, pos + 1)?;
+                node = Expr::Binary {
+                    op: BinaryOp::Sub,
+                    left: Box::new(node),
+                    right: Box::new(rhs),
+                };
+                pos = next;
+            }
+            _ => break,
+        }
+    }
+
+    Ok((node, pos))
+}
+
+fn parse_mul_div(tokens: &[Token], mut pos: usize) -> Result<(Expr, usize), CalcError> {
+    let (mut node, mut pos2) = parse_primary(tokens, pos)?;
+    pos = pos2;
+
+    while pos < tokens.len() {
+        match tokens[pos] {
+            Token::Mul => {
+                let (rhs, next) = parse_primary(tokens, pos + 1)?;
+                node = Expr::Binary {
+                    op: BinaryOp::Mul,
+                    left: Box::new(node),
+                    right: Box::new(rhs),
+                };
+                pos = next;
+            }
+            Token::Div => {
+                let (rhs, next) = parse_primary(tokens, pos + 1)?;
+                node = Expr::Binary {
+                    op: BinaryOp::Div,
+                    left: Box::new(node),
+                    right: Box::new(rhs),
+                };
+                pos = next;
+            }
+            _ => break,
+        }
+    }
+
+    Ok((node, pos))
+}
+
+fn parse_primary(tokens: &[Token], pos: usize) -> Result<(Expr, usize), CalcError> {
+    if pos >= tokens.len() {
+        return Err(CalcError::ParseError("unexpected end of input".into()));
+    }
+
+    match &tokens[pos] {
+        Token::Number(n) => Ok((Expr::Number(*n), pos + 1)),
+        Token::Ident(name) => Ok((Expr::Var(name.clone()), pos + 1)),
+        Token::LParen => {
+            let (expr, pos2) = parse_add_sub(tokens, pos + 1)?;
+            match tokens.get(pos2) {
+                Some(Token::RParen) => Ok((expr, pos2 + 1)),
+                _ => Err(CalcError::ParseError("expected ')'".into())),
+            }
+        }
+        other => Err(CalcError::InvalidToken(format!("{:?}", other))),
+    }
+}
