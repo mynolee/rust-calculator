@@ -5,6 +5,7 @@ mod lexer;
 mod parser;
 mod token;
 
+use crate::eval::eval_expr;
 use crate::lexer::tokenize;
 use crate::parser::parse_expr;
 
@@ -17,4 +18,7 @@ fn main() {
 
     let ast = parse_expr(&tokens).expect("parse failed");
     println!("ast: {:?}", ast);
+
+    let result = eval_expr(&ast);
+    println!("result: {:?}", result);
 }
